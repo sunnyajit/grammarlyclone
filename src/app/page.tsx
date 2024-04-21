@@ -1,95 +1,99 @@
-import Image from "next/image";
+"use client"
 import styles from "./page.module.css";
+import { useState } from "react";
+
+
+const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API
+
 
 export default function Home() {
+  const [text, setText] = useState('')
+  const [fixedText, setFixedText] = useState('')
+  const [isSending, setIsSending] = useState(false)
+
+  
+   const trainingPrompt =  [
+    {
+      "parts":[{
+            "text": "From next prompt I will be just providing you some text or sentence or paragraph, rewrite the grammar for me."
+      }
+      ],
+      "role": "user"
+ },
+ {
+      "parts":[
+         {
+             "text":"okay"
+             }
+      ],
+      "role": "model"
+ }
+
+   ]
+
+  const FixText = async () =>{
+       console.log(text)
+       let url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key='+API_KEY
+
+       let messageToSend =  [
+          ...trainingPrompt,
+
+          {
+            "parts":[{
+                  "text": text
+            }
+            ],
+            "role": "user"
+          }
+
+       ]
+
+       setIsSending(true)
+       let res = await fetch(url,{
+           method:'POST',
+           headers:{
+            'Content-Type': 'application/json'
+           },
+
+           body: JSON.stringify({
+              "contents": messageToSend
+           })
+       })
+
+       let resjson = await res.json()
+       setIsSending(false)
+       console.log(resjson)
+       let responseMessage = resjson.candidates[0].content.parts[0].text
+       console.log(responseMessage)
+       setFixedText(responseMessage)
+  }
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+      <div className={styles.main}>
+           <div className={styles.container}>
+           <textarea
+               className={styles.input}
+               placeholder="enter ur text here.."
+               value = {text}
+                onChange={(e) => setText(e.target.value)} 
+                />
+
+                {
+                  fixedText.length>0 ?
+                  <p className={styles.fixed}>
+                    <span style={{whiteSpace: 'pre-wrap'}}> {fixedText}</span>
+                  </p>
+                  :
+                  <p className={styles.notfixed}>
+                        Promt is empty...
+                  </p>
+                }
+            
+  
+             </div>
+             <button className={styles.button} 
+                onClick={FixText}
+             >Fix</button>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
   );
 }
